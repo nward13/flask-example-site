@@ -1,0 +1,100 @@
+{% from "_formhelpers.html" import render_field %}
+{% extends 'base.html' %}
+
+{% block head %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+
+        // The view passes in all of the unique values for each archive
+        // category when the template is rendered, so the javascript just
+        // gets that data into a usable form and attaches an on-change
+        // listener to the first select box (category), then updates the
+        // second select box with the options that exist in our database
+
+        var sub_options = JSON.parse('{{ sub_options | tojson | safe }}');
+        console.log("SUB_OPTIONS: ", sub_options)
+
+        $(document).ready(function(){
+            if (sub_options) {
+                update_options();
+            }
+        });
+
+        $(document).on('change', "#sort_by", function() {
+            update_options();
+        });
+
+        function update_options() {
+            let sort_by = get_sort_by();
+            $('#sub_sort').empty()
+            fill_sub_options(sort_by);
+        }
+
+        function get_sort_by(sort_by) {
+            sort_by = $("#sort_by").val()
+            return sort_by
+        }
+        
+        function fill_sub_options(sort_by) {
+            let choices = sub_options[sort_by]
+            if (choices.length < 1 || choices == undefined) {
+                $('#sub_sort').append("<option value=''>Sorry, we don't have any posts yet.</option>")
+                $('.btn').hide()
+            } else {
+                for (let i = 0; i < choices.length; i++) {
+                    $('#sub_sort').append("<option value='" + choices[i].value + "'>" + choices[i].name + "</option>")
+                } 
+            }
+        }
+
+    </script>
+
+{% endblock %}
+
+{% block heading %}
+    {% block title %}
+        Blog Archives
+    {% endblock %}
+{% endblock %}
+
+{% block subheading %}
+    The rich history of The Code Challenge Blog.
+{% endblock %}
+
+{% block container %}
+
+    {% if form is not none %}
+        <div class="card">
+            <div class="card-header">
+                Explore the Archives
+            </div>
+            <div class="card-block">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    {{ render_field(form.sort_by) }}
+                    {{ render_field(form.sub_sort) }}
+                    <div class="text-right">
+                        <button type="submit" class="btn btn-primary">View Posts</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <br>
+    {% endif %}
+
+    {% if posts is not none %}
+        {% if not posts %}
+            <p>No blog posts yet.</p>
+        {% endif %}
+        {% for post in posts %}
+            <div class="blog-post">
+                <h2 class="blog-post-title">{{ post.title }}</h2>
+                <p class="blog-post-meta">{{ post.pub_date }} by 
+                    <a href="{{ url_for('blog.author', author_id=post.author_id) }}">{{ post.author.name }}</a>
+                </p>
+                <p>{{ post.body }}</p>
+            </div>
+        {% endfor %}
+    {% endif %} 
+{% endblock %}
+

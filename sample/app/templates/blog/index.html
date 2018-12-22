@@ -1,0 +1,35 @@
+{% extends 'blog/blog.html' %}
+
+{% block heading %}
+    {% block title %}
+        The Code Challenge Blog
+    {% endblock %}
+{% endblock %}
+
+{% block subheading %}
+    An example site built with Flask, Bootstrap, and a hint of JavaScript
+{% endblock %}
+
+{% block content %}
+    {% if not posts %}
+        <p>No blog posts yet.</p>
+    {% endif %}
+    {% for post in posts %}
+        <div class="blog-post">
+            <h2 class="blog-post-title">{{ post.title }}</h2>
+            <p class="blog-post-meta">{{ post.pub_date }} by 
+                <a href="{{ url_for('blog.author', author_id=post.author_id) }}">{{ post.author.name }}</a>
+            </p>
+            <p>{{ post.body }}</p>
+        </div>
+    {% endfor %}
+
+    {% if prev_url %}
+        <a href="{{ prev_url }}">Previous Page</a>    
+    {% endif %}
+    {% if next_url %}
+        <span>&nbsp;&nbsp;</span>
+        <a href="{{ next_url }}">Next Page</a>
+    {% endif %}
+    
+{% endblock %}

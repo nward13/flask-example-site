@@ -2,19 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
 
     <link rel="icon" href="https://v4-alpha.getbootstrap.com/favicon.ico">
 
-    <title>Blog Template for Bootstrap</title>
+    
+    <title>{% block title %}{% endblock %}</title>
 
     <!-- Bootstrap core CSS -->
     <link href="https://v4-alpha.getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Custom styles for this template -->
-    <link href="https://v4-alpha.getbootstrap.com/examples/blog/blog.css" rel="stylesheet">
+    <!-- <link href="https://v4-alpha.getbootstrap.com/examples/blog/blog.css" rel="stylesheet"> -->
+
+    <!-- A slightly modified version of the original Bootstrap Blog Template css.
+        Original link above -->
+    <link href="{{ url_for('static', filename='css/base.css') }}" rel="stylesheet">
+
+    {% block head %}{% endblock %}
+
   </head>
 
   <body>
@@ -22,24 +30,25 @@
     <div class="blog-masthead">
       <div class="container">
         <nav class="nav blog-nav">
-          <a class="nav-link active" href="{{ url_for('index') }}">Home</a>
-          <a class="nav-link" href="#">New features</a>
-          <a class="nav-link" href="#">Press</a>
-          <a class="nav-link" href="#">New hires</a>
-          <a class="nav-link" href="#">About</a>
+          <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+          <a class="nav-link" href="{{ url_for('blog.archive') }}">Archives</a>
+          <a class="nav-link" href="{{ url_for('blog.authors') }}">Authors</a>
+          <a class="nav-link" href="{{ url_for('about_me.about_me') }}">About Nick</a>
+          <a class="nav-link" href="{{ url_for('blog.create') }}">Create</a>
           {% if current_user.is_authenticated %}
-          <div class="nav-item dropdown">
+          <div class="navbar-right nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   {{ current_user.email }}
               </a>
               <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                  <a class="dropdown-item" href="{{ url_for('account') }}">View</a>
+                  <a class="dropdown-item" href="{{ url_for('auth.account') }}">View</a>
                   <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" href="{{ url_for('logout') }}">Log Out</a>
+                  <a class="dropdown-item" href="{{ url_for('auth.logout') }}">Log Out</a>
               </div>
           </div>
           {% else %}
-          <a class="nav-link btn btn-primary" href="{{ url_for('login') }}">Log In</a>
+          <!-- td -->
+          <a class="navbar-right nav-link btn btn-primary" href="{{ url_for('auth.login') }}">Log In</a>
           {% endif %}
         </nav>
       </div>
@@ -47,8 +56,8 @@
 
     <div class="blog-header">
       <div class="container">
-        <h1 class="blog-title">The Bootstrap Blog</h1>
-        <p class="lead blog-description">An example blog template built with Bootstrap.</p>
+        <h1 class="blog-title">{% block heading %}{% endblock %}</h1>
+        <p class="lead blog-description">{% block subheading %}{% endblock %}</p>
       </div>
     </div>
 
@@ -70,13 +79,18 @@
 
         {% block container %}{% endblock %}
     </div><!-- /.container -->
-
-    <footer class="blog-footer">
-      <p>Blog template built for <a href="https://getbootstrap.com">Bootstrap</a> by <a href="https://twitter.com/mdo">@mdo</a>.</p>
-      <p>
-        <a href="#">Back to top</a>
-      </p>
-    </footer>
+    {% block rawContent %}{% endblock %}
+    
+    {% block footer %}
+      <footer class="blog-footer">
+          <p>Just want to see lots of blog posts? <a href="{{ url_for('blog.seed') }}">Seed the blog.</a></p>
+        <p>Original blog template built for <a href="https://getbootstrap.com">Bootstrap</a> by <a href="https://twitter.com/mdo">@mdo</a>.</p>
+        <p>Thanks <a href="https://twitter.com/mdo">@mdo</a>!</p>
+        <p>
+          <a href="#">Back to top</a>
+        </p>
+      </footer>
+    {% endblock %}
 
 
     <!-- Bootstrap core JavaScript

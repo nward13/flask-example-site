@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ipfs-pics.css') }}">
+
+    <!-- <style>
+        img {width: 45%;height: 45%;}
+    </style> -->
+{% endblock %}
+
+{% block heading %}
+    {% block title %}
+        About Me
+    {% endblock %}
+{% endblock %}
+
+{% block subheading %}
+    <h7>
+        Hi! I'm Nick. I'm a software developer with a passion for outdoor adventures and learning new things.
+        I'm currently working in the Blockchain space, but I'm excited about the possibility of making 
+        the jump to more traditional full-stack development with an exciting early-stage company like Only Sky. 
+        But, you probably already knew all that. So, I thought I would share some of my favorite pictures. By the 
+        way, these images are all hosted on the <a href="https://ipfs.io/" target="_blank">InterPlanetary File System</a>, 
+        so that's kind of cool (but also why they might be a bit slow to load).
+    </h7>
+{% endblock %}
+
+{% block rawContent %}
+
+    <div class="row">
+        
+        <div class="column">
+            <img src="https://ipfs.infura.io/ipfs/QmeS4nBk8xfwF13HaqRtDRgFsahmW5XveXpZ3XBoR6Dna1" alt="Canyon" style="width:100%">
+        </div>
+    
+        <div class="column">
+                <img src="https://ipfs.infura.io/ipfs/QmY6EgreyfD59cHrP2thCQMG2xDeqVTpqJA49irKMkDMLa" alt="Bears" style="width:100%">
+        </div>
+
+        <div class="column">
+                <img src="https://ipfs.infura.io/ipfs/QmQmAr3GgUTnpbyZJ7rWGGiZJ8q8vrEGuuS73CsH779TXS" alt="Waterfall" style="width:100%">
+        </div>
+
+        <div class="column">
+                <img src="https://ipfs.infura.io/ipfs/QmbLhQXgaY3Y7owQZsEnprGHytFip7hQ6soWuVxqK3Y28p" alt="Lake" style="width:100%">
+        </div>
+        <div class="column">
+                <img src="https://ipfs.infura.io/ipfs/QmRHT8AqB7H9j8acKdgS3piVemdwCbTQoYU6NjWjXdmTxR" alt="Waterfall" style="width:100%">
+        </div>
+        <div class="column">
+                <img src="https://ipfs.infura.io/ipfs/QmTjXgujiK4Qz4572Ey2q3oc38dGtNSwAYDVGnMSBrXtrn" alt="Choppa" style="width:100%">
+        </div>
+        <div class="column">
+                <img src="https://ipfs.infura.io/ipfs/QmXt6PVxn1ohJdPxU6FvGDRRU4BnRuJ1STCvRtR7xBbHpV" alt="River" style="width:100%">
+        </div>
+        <div class="column">
+                <img src="https://ipfs.infura.io/ipfs/QmaJ6rKgxyiZgb9WdxDmuciEhkAPYgMEmr8kEnLfkqAu9a" alt="River Valley" style="width:100%">
+        </div>
+        <div class="column">
+                <img src="https://ipfs.infura.io/ipfs/QmVeyuheh4UFo5cVCsmHgB2ASxQHVtMBzGUXno7AamAe7i" alt="City street" style="width:100%">
+        </div>
+        <div class="column">
+                <img src="https://ipfs.infura.io/ipfs/QmZL5XBvyZedR7hEUrPY4ar9uBxwXC4h3EeEjLqu1AckJe" alt="Annapurna" style="width:100%">
+        </div>
+        <div class="column">
+            <img src="https://ipfs.infura.io/ipfs/QmPztBgnwepuUjZUS4XoheyD5reb98momEJATCuwpyjp9L" alt="Waterfall" style="width:100%">
+        </div>
+        
+
+        <div class="column">
+                <img src="https://ipfs.infura.io/ipfs/QmY3FXhfGhW3Jx18FrXUdm2DzjvEXWQkPdsuPPqFFMQg5Q" alt="Glacier" style="width:100%">
+        </div>
+
+      </div>
+
+{% endblock %}
+
+{% block footer %}{% endblock %}

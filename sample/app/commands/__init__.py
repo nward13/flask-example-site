@@ -2,7 +2,6 @@
 
 import click
 
-
 def init_app(app, db):
     @app.cli.command()
     @click.option('--uri', default=None)
@@ -13,3 +12,7 @@ def init_app(app, db):
             app.config['SQLALCHEMY_DATABASE_URI'] = uri
 
         db.create_all()
+
+
+
+
