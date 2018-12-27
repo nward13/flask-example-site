@@ -61,7 +61,7 @@ class SignupForm(FlaskForm):
         user_match = User.query.filter_by(email=self.email.data).one_or_none()
         if user_match is not None:
             # If we already have a match, tell them to login
-            flash('An account with that email already exists.')
+            self.email.errors.append('An account with that email already exists.')
             return False
 
         return True
@@ -110,7 +110,7 @@ def login():
 
 
 #Sign Up Page
-@bp.route('/signup', methods=['GET', 'POST'])
+@bp.route('/signup/', methods=['GET', 'POST'])
 def signup():
     form = SignupForm()
 

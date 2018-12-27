@@ -13,8 +13,12 @@ from werkzeug.security import generate_password_hash
 
 from app.main import db
 
+# TODO
+from app.auth import User, add_user
+
 bp = Blueprint('blog', __name__)
 
+# Number of posts for each page across the site (i.e. main blog, archives, etc.)
 POSTS_PER_PAGE = 10
 
 class Post(db.Model):
@@ -61,29 +65,26 @@ class ArchiveForm(FlaskForm):
         (sort_by_values['month'], 'Month (in 2018)'), 
         (sort_by_values['year'], 'Year')
     ]
-    sort_by = SelectField(u'Sort By:', choices=sort_choices)
+    sort_by = SelectField('Sort By:', choices=sort_choices)
 
     # These are the subfields. These are filled in dynamically based on
     # the unique values in the database for whicheve category the user
     # selects. i.e. if I want to view posts by author, I will only have
     # to choose from authors that have published posts
-    sub_sort = SelectField(u'Include Results From:', choices=[])
+    sub_sort = SelectField('Include Results From:', choices=[])
 
 
 # The index route. The main page of our site serves all of the blog posts,
 # starting with the most recent posts and showing 10 per page
 @bp.route("/", methods=['GET', 'POST'])
 def index():
-    # Not sure if we want this to be the same for all pages yet, so keeping
-    # as a constant with the same name, but assigned separately where used
-    POSTS_PER_PAGE = 10
 
     # Get the current page from the request arguments
     page = request.args.get('page', default=1, type=int)
 
     # Get the most recent posts from the database, using paginate, our 
     # number of posts per page (10), and the current page (from request arguments)
-    posts = Post.query.paginate(page, POSTS_PER_PAGE, False)
+    posts = Post.query.order_by(Post.pub_date.desc()).paginate(page, POSTS_PER_PAGE, False)
 
     # Get the urls for the next page and the previous page, which will be
     # used for "Older Posts" links
@@ -101,7 +102,7 @@ def index():
 
 
 # 'Create a Blog Post' Page
-@bp.route("/blog/create", methods=['GET', 'POST'])
+@bp.route("/blog/create/", methods=['GET', 'POST'])
 @login_required
 def create():
     form = PostForm()
@@ -119,9 +120,9 @@ def create():
 
 
 # Page to view information and recent posts by an author
-@bp.route("/blog/author/<int:author_id>")
+@bp.route("/blog/author/<int:author_id>/")
 def author(author_id):
-    from app.auth import User
+    # from app.auth import User
 
     # Grab the user (author) by the id in the route
     user = User.query.filter_by(id=author_id).one_or_none()
@@ -144,9 +145,9 @@ def author(author_id):
 # The page to view a list of all the authors that have posted on the blog.
 # Should show their number of posts and a link to their more detailed
 # information page
-@bp.route("/blog/authors")
+@bp.route("/blog/authors/")
 def authors():
-    from app.auth import User
+    # from app.auth import User
     
     # Grab the first 20 authors from the database. 20 is arbitrary, should
     # in theory just paginate this
@@ -163,7 +164,7 @@ def authors():
 # The archive of blog posts
 @bp.route("/blog/archive/", methods=['GET', 'POST'])
 def archive():
-    from app.auth import User
+    # from app.auth import User
 
     form = ArchiveForm()
 
@@ -288,20 +289,19 @@ def add_post(title, body, author_id, pub_date=None):
 
 
 # Create a couple fake accounts and articles
-@bp.route("/seed")
+@bp.route("/seed/")
 def seed():
-    from app.auth import User, add_user
+    # from app.auth import User, add_user
 
     # Check that we're not blowing up our own database with this function
     post_count = Post.query.count()
-    if (post_count > 60):
+    if (post_count > 200):
         flash("Too many posts. Bailing.")
         return redirect(url_for('index'))
 
-    # Use really long emails, because right now it doesn't check for a
-    # collision in the database
+    # Users
     users = [
-        {'email':"fakeemailreserved@example.com", 'password':"password", 'name':"Joe"},
+        {'email':"fakeemail@example.com", 'password':"password", 'name':"Joe"},
         {'email':"anotherlongfakeemail@example.com", 'password':"password", 'name':"Sawyer"},
         {'email':"longemailsaretheworst@example.com", 'password':"password", 'name':"Danielle"}
     ]
