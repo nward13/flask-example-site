@@ -2,7 +2,9 @@
 {% extends 'base.html' %}
 
 {% block head %}
+    <!-- jQuery cdn -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
     <script>
 
         // The view passes in all of the unique values for each archive
@@ -42,7 +44,7 @@
                 $('.btn').hide()
             } else {
                 for (let i = 0; i < choices.length; i++) {
-                    $('#sub_sort').append("<option value='" + choices[i].value + "'>" + choices[i].name + "</option>")
+                    $('#sub_sort').append("<option value=" + choices[i].value + ">" + choices[i].name + "</option>")
                 } 
             }
         }

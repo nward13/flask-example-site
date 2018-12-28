@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import calendar
+from itertools import chain
 from datetime import datetime, timedelta
 from flask import Blueprint, flash, Flask, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -12,8 +13,6 @@ from wtforms.validators import DataRequired, Length
 from werkzeug.security import generate_password_hash
 
 from app.main import db
-
-# TODO
 from app.auth import User, add_user
 
 bp = Blueprint('blog', __name__)
@@ -71,7 +70,7 @@ class ArchiveForm(FlaskForm):
     # the unique values in the database for whicheve category the user
     # selects. i.e. if I want to view posts by author, I will only have
     # to choose from authors that have published posts
-    sub_sort = SelectField('Include Results From:', choices=[])
+    sub_sort = SelectField('Include Results From:', choices=[], coerce=int)
 
 
 # The index route. The main page of our site serves all of the blog posts,
@@ -122,7 +121,6 @@ def create():
 # Page to view information and recent posts by an author
 @bp.route("/blog/author/<int:author_id>/")
 def author(author_id):
-    # from app.auth import User
 
     # Grab the user (author) by the id in the route
     user = User.query.filter_by(id=author_id).one_or_none()
@@ -147,7 +145,6 @@ def author(author_id):
 # information page
 @bp.route("/blog/authors/")
 def authors():
-    # from app.auth import User
     
     # Grab the first 20 authors from the database. 20 is arbitrary, should
     # in theory just paginate this
@@ -164,14 +161,9 @@ def authors():
 # The archive of blog posts
 @bp.route("/blog/archive/", methods=['GET', 'POST'])
 def archive():
-    # from app.auth import User
-
     form = ArchiveForm()
 
-    # Having trouble getting the select form to validate. This is 
-    # definitely not secure, as we take inputs directly from user and user
-    # them to access our db w/o validation, but it works for now
-    if form.is_submitted():
+    if form.validate_on_submit():
 
         # The sorting category from the submitted form (i.e. yearly, monthly, by author)
         sort_by = form.sort_by.data
@@ -262,7 +254,19 @@ def archive():
         'author': authors
     }
 
-    # Render out template without posts for a GET request and show the
+    # Get a list of all possible submission choices. Our js will decide
+    # what options to show a user, but the form needs to know the possible
+    # option values to validate. Take the sub_options dict of lists and
+    # create a tuple from each object in the lists.
+    # chain.from_iterable(sub_options.values()) is equivalent to the list comprehension
+    # [choice for category in sub_options.values() for choice in category]
+    sub_sort_choices = [(choice['value'], choice['name']) 
+        for choice in chain.from_iterable(sub_options.values())]
+
+    # Add our choices to the form
+    form.sub_sort.choices.extend(sub_sort_choices)
+
+    # Render our template without posts for a GET request and show the
     # user the selection form
     return render_template(
         'blog/archive.html', 
@@ -291,7 +295,6 @@ def add_post(title, body, author_id, pub_date=None):
 # Create a couple fake accounts and articles
 @bp.route("/seed/")
 def seed():
-    # from app.auth import User, add_user
 
     # Check that we're not blowing up our own database with this function
     post_count = Post.query.count()
