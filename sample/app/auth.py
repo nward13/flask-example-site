@@ -31,7 +31,7 @@ class User(db.Model, UserMixin):
     name = db.Column(db.String(120))
 
     def __repr__(self):
-        return '<User %r, %r, %r>' % (self.email, self.name)
+        return '<User %r, %r>' % (self.email, self.name)
 
     def check_password(self, password):
         # Check the hash of the password to avoid storing plaintext passwords
