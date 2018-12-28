@@ -7,7 +7,7 @@ from flask import Blueprint, flash, Flask, redirect, render_template, request, u
 from flask_login import current_user, login_required
 from flask_wtf import FlaskForm
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.sql.expression import extract, distinct
+from sqlalchemy.sql.expression import extract, distinct, func
 from wtforms import StringField, TextAreaField, SelectField
 from wtforms.validators import DataRequired, Length
 from werkzeug.security import generate_password_hash
@@ -61,7 +61,7 @@ class ArchiveForm(FlaskForm):
     sort_by_values = {'author':'author', 'month':'month', 'year':'year'}
     sort_choices = [
         (sort_by_values['author'], 'Author'), 
-        (sort_by_values['month'], 'Month (in 2018)'), 
+        (sort_by_values['month'], 'Month (in ' + str(datetime.now().year) + ')'), 
         (sort_by_values['year'], 'Year')
     ]
     sort_by = SelectField('Sort By:', choices=sort_choices)
@@ -296,6 +296,13 @@ def add_post(title, body, author_id, pub_date=None):
 @bp.route("/seed/")
 def seed():
 
+    # Total number of posts to make and how much to vary the pub_date of
+    # each post. These constants are only declared inside seed function 
+    # because this is just intended as a tester function and isn't related
+    # to the rest of the site
+    posts_to_make = 20
+    time_diff = timedelta(days=21)
+
     # Check that we're not blowing up our own database with this function
     post_count = Post.query.count()
     if (post_count > 200):
@@ -306,11 +313,14 @@ def seed():
     users = [
         {'email':"fakeemail@example.com", 'password':"password", 'name':"Joe"},
         {'email':"anotherlongfakeemail@example.com", 'password':"password", 'name':"Sawyer"},
-        {'email':"longemailsaretheworst@example.com", 'password':"password", 'name':"Danielle"}
+        {'email':"longemailsaretheworst@example.com", 'password':"password", 'name':"Danielle"},
+        {'email':"longemailexample@example.com", 'password':"password", 'name':"Logan"},
     ]
 
-    # post content
+    # Post content
     posts = [
+        "An pericula mediocritatem necessitatibus pri, velit falli deterruisset in nec, at eum porro nobis. Est inani mollis suscipiantur ex, his in tale oblique accusamus, quod consulatu mea at. Mucius alienum delicata te vix, probo phaedrum salutatus vis no. Mazim laudem perpetua ius ad. Quis definitiones est id, accusata constituto honestatis mei id, in eos persius tincidunt expeten"
+        "Tacimates euripidis usu et, in ocurreret sententiae reprehendunt qui, id molestie laboramus vix. Omnes albucius constituto sed et, at nec viderer labores oportere. Cu nostrud lucilius corrumpit usu, est solet tacimates consulatu id. Usu eu consul numquam saperet."
         "Iis repugnemus perficitur dei persuadere dum praesertim familiarem quodcumqu",
         "reliqui ut vigilia mo at ostendi. Ut re vero unde soni ex ac solo. Quicquam temporis physicae ex ex co. Gi quibusnam perceptio ad ac industria persuasum eminenter. Male vi eram quin ha ii ad modo inde. Nos via probentur obversari ope opportune. Ea de animam iisdem juncta.",
         "Ita dependent productus dat simplicia uno. Aciem corpo ",
@@ -336,22 +346,26 @@ def seed():
         user_entry = User.query.filter_by(email=user['email']).one_or_none()
         user['id'] = user_entry.id
 
-    # Store current time to calculate varying fake publish dates for the fake posts
+    # Store the current date to calculate varying fake publish dates for 
+    # the new fake posts
     now = datetime.utcnow()
 
-    # Create 13 blog posts, decreasing the pub_date every time to create some variety
-    for idx, post in enumerate(posts):
+    # Create blog posts, decreasing the pub_date every time to create some variety
+    for post_num in range(posts_to_make):
         # Rotate through author_id's, publishing every post from a new author
         # until we run out of made up authors
-        author_id = users[idx % (len(users))]['id']
+        author_id = users[post_num % len(users)]['id']
+
+        # Rotate through posts, publishing every post with new content
+        # until we run out of posts, then loop back around
+        post = posts[post_num % len(posts)]
 
         # Calculate the publish date. This is done just to provide some
         # variety and make the archive more interesting
-        time_diff = timedelta(days=14)
-        pub_date = now - time_diff * idx
+        pub_date = now - time_diff * post_num
 
         # Make the title of each post based on the current post count
-        title = "Post Number " + str(post_count + idx + 1)
+        title = "Post Number " + str(post_count + posts_to_make - post_num)
 
         # Add the post to the database
         add_post(title, post, author_id, pub_date)
