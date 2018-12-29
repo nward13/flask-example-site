@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block content %}
-    {% if authors is not defined %}
+    {% if not authors %}
         <p>No authors found.</p>
     {% endif %}
     {% for author in authors %}

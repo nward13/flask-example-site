@@ -146,13 +146,16 @@ def author(author_id):
 @bp.route("/blog/authors/")
 def authors():
     
-    # Grab the first 20 authors from the database. 20 is arbitrary, should
-    # in theory just paginate this
-    authors = User.query.limit(20).all()
+    # Get each user that has made a post and the number of posts they 
+    # have made. Returns a list of (User, post_count) tuples. In the
+    # event that there are no matching records, returns an empty list
+    post_counts = db.session.query(User, func.count(Post.author_id)) \
+        .outerjoin(Post).filter(Post.id != None).group_by(Post.author_id).all()
 
-    # get the number of posts each author has published
-    for author in authors:
-        author.post_count = Post.query.filter_by(author_id=author.id).count()
+    # Go from a list of (User, post_count) tuples to a list of objects
+    # containing only the values we need to pass into our template 
+    authors = [{'id':user.id, 'name':user.name, 'post_count':post_count} 
+        for (user, post_count) in post_counts]
 
     # Render our authors template with the authors from the database
     return render_template('blog/authors.html', authors=authors)
