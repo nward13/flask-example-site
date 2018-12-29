@@ -125,18 +125,21 @@ def create():
 def author(author_id):
 
     # Grab the user (author) by the id in the route
-    user = User.query.filter_by(id=author_id).one_or_none()
+    user = User.query.get(author_id)
     
     # If we can't find the author id in our database, let the user know
     if user is None:
         flash("Can't find that user id.")
         return redirect(request.args.get('next') or url_for('index'))
 
+    # Base query for posts by author
+    user_posts_query = posts_by_auth_query(author_id)
+
     # Get the number of posts the author has published
-    post_count = Post.query.filter_by(author_id=author_id).count()
+    post_count = user_posts_query.count()
 
     # Get the last three posts by the author (to display the titles)
-    posts = Post.query.filter_by(author_id=author_id).order_by(Post.pub_date.desc()).limit(3).all()
+    posts = user_posts_query.order_by(Post.pub_date.desc()).limit(3).all()
 
     # Render the author's information page
     return render_template('blog/author.html', user=user, post_count=post_count, posts=posts)
@@ -193,7 +196,7 @@ def archive():
         # If we're sorting by author, grab all the posts where author_id
         # matches the sub-sort parameter
         elif sort_by == ArchiveForm.sort_by_values['author']:
-            posts = Post.query.filter_by(author_id=sub_sort).limit(30).all()
+            posts = posts_by_auth_query(sub_sort).limit(30).all()
 
         # Render the template with all of the posts in that category.
         return render_template(
@@ -244,7 +247,7 @@ def archive():
     for author_id in author_ids:
         authors.append({
             'value':author_id, 
-            'name': User.query.filter_by(id=author_id).one_or_none().name 
+            'name': User.query.get(author_id).name 
         })
 
 
@@ -291,6 +294,11 @@ def add_post(title, body, author_id, pub_date=None):
         pub_date=pub_date
     )
     db.session.add(new_post)
+
+
+# Returns a reused base query for posts by the given author
+def posts_by_auth_query(author_id):
+    return Post.query.filter_by(author_id=author_id)
 
 
 # Create a couple fake accounts and articles
