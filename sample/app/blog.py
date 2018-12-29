@@ -107,12 +107,14 @@ def create():
     form = PostForm()
 
     if form.validate_on_submit():
-        # Add post to the database. add_post returns true on success,
-        # so we want to notify the user that they successfully created
-        # a post, then send them to the home page
-        if add_post(form.title.data, form.content.data, current_user.id):
-            flash('Post created successfully.')
-            return redirect(url_for('index'))
+        # Add post to the database
+        add_post(form.title.data, form.content.data, current_user.id)
+        db.session.commit()
+        
+        # notify the user that they successfully created a post 
+        flash('Post created successfully.')
+        # Send them to the homepage
+        return redirect(url_for('index'))
 
     # render create form on GET request or invalid POST request
     return render_template('blog/create.html', form=form)
@@ -289,10 +291,6 @@ def add_post(title, body, author_id, pub_date=None):
         pub_date=pub_date
     )
     db.session.add(new_post)
-    db.session.commit()
-
-    # Return true on success so if called from browser, UI can notify user
-    return True
 
 
 # Create a couple fake accounts and articles
@@ -344,6 +342,9 @@ def seed():
         # If the user doesn't exist yet, add them
         if User.query.filter_by(email=user['email']).one_or_none() is None:
             add_user(user['email'], user['password'], user['name'])
+        
+        # Commit db changes
+        db.session.commit()
 
         # Grab the user id
         user_entry = User.query.filter_by(email=user['email']).one_or_none()
@@ -373,5 +374,9 @@ def seed():
         # Add the post to the database
         add_post(title, post, author_id, pub_date)
 
+    # Commit db changes
+    db.session.commit()
+
+    # Send them to the homepage
     flash('Lots of new posts!')
     return redirect(url_for('index'))

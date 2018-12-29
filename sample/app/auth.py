@@ -116,8 +116,19 @@ def signup():
 
     # If form fields are valid and user not yet in database
     if form.validate_on_submit():
-        # Add new user to the database
-        add_user(form.email.data, form.password.data, form.name.data, True)
+        # Create user instance
+        new_user = User(
+            email=form.email.data,
+            password=generate_password_hash(form.password.data),
+            name=form.name.data
+        )
+
+        # Add them to the database
+        db.session.add(new_user)
+        db.session.commit()
+
+        # Log them in
+        login_user(new_user)
 
         # Send them to their destination or the home page
         flash('Thanks for signing up! Go to the Create page to make a post.')
@@ -147,8 +158,7 @@ def account():
 
 # Helper function to add a user to the database. Note that we expect  
 # password in plaintext, but store the hash of the password in the db.
-# Can log them in automatically, but login bool defaults to False
-def add_user(email, password, name, login=False):
+def add_user(email, password, name):
     new_user = User(
         email=email,
         password=generate_password_hash(password),
@@ -157,8 +167,3 @@ def add_user(email, password, name, login=False):
 
     # Add them to the database
     db.session.add(new_user)
-    db.session.commit()
-
-    # And log them in if requested
-    if login:
-        login_user(new_user)
