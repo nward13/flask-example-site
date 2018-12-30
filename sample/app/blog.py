@@ -194,6 +194,52 @@ def archive_options_ajax():
 # The archive of blog posts
 @bp.route("/blog/archive/", methods=['GET', 'POST'])
 def archive():
+    # Grab the year, month, author args from the request.
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+    author_id = request.args.get('author_id', type=int)
+
+    # If the request args are not None, we're looking for another page of
+    # the archive posts
+    if None not in (year, month, author_id):
+        # Get the current page from the request arguments
+        page = request.args.get('page', default=1, type=int)
+
+        # Get all of the posts for the given paramters. Returns a pagination
+        # object where the items are a list of Post objects
+        posts = archive_posts(year, month, author_id).paginate(page, ITEMS_PER_PAGE, False)
+
+        # Get the urls for the next page and the previous page, which will be
+        # used for "Older Posts" links
+        next_url = url_for('blog.archive', \
+            page=posts.next_num, \
+            year=year, \
+            month=month, \
+            author_id=author_id) \
+            if posts.has_next else None
+
+        prev_url = url_for('blog.archive', \
+            page=posts.prev_num, \
+            year=year, \
+            month=month, \
+            author_id=author_id) \
+            if posts.has_prev else None
+
+        # Render the template with all of the posts in the category on the
+        # page requested.
+        return render_template(
+            'blog/archive.html', 
+            form=None,
+            posts=posts.items,
+            next_url=next_url,
+            prev_url=prev_url
+        )
+        
+    # We're not looking for another page of posts, so it's either a POST
+    # request submitting the archive form or an initial GET looking
+    # for the archive form
+
+    # Instantiate the form
     form = ArchiveForm()
 
     # Get all available unique values for years, months, and authors in the db 
@@ -212,17 +258,34 @@ def archive():
         # Grab the query parameters from the form
         year = form.year.data
         month = form.month.data
-        author = form.author.data
+        author_id = form.author.data
 
-        # Get all of the posts for the given paramters. Returns a list
-        # of Post objects
-        posts = archive_posts(year, month, author)
+        # Get all of the posts for the given paramters. Returns a pagination
+        # object where the items are a list of Post objects
+        posts = archive_posts(year, month, author_id).paginate(1, ITEMS_PER_PAGE, False)
 
-        # Render the template with all of the posts in that category.
+        # Get the urls for the next page and the previous page, which will be
+        # used for "Older Posts" links
+        next_url = url_for('blog.archive', \
+            page=posts.next_num, \
+            year=year, month=month, \
+            author_id=author_id) \
+            if posts.has_next else None
+
+        prev_url = url_for('blog.archive', \
+            page=posts.prev_num, \
+            year=year, \
+            month=month, \
+            author_id=author_id) \
+            if posts.has_prev else None
+
+        # Render the template with the first page of posts in that category.
         return render_template(
             'blog/archive.html', 
             form=None,
-            posts=posts,
+            posts=posts.items,
+            next_url=next_url,
+            prev_url=prev_url
         )
 
     # Render our template without posts for a GET request with no request
@@ -304,8 +367,6 @@ def author_options(year=0, month=0):
 # Any argument=0 means that all values for that category are matched.
 # Calling without arguments returns all posts in the db
 def archive_posts(year=0, month=0, author_id=0):
-    #td
-    # base_query = db.session.query(Post)
     base_query = Post.query
 
     # Get the query filters for the given parameters. 0 values will result
@@ -314,7 +375,7 @@ def archive_posts(year=0, month=0, author_id=0):
 
     # Query the db for posts matching the year, month, and author parameters.
     # Returns a list of Post objects
-    return base_query.filter(*filters).all()
+    return base_query.filter(*filters)
 
 
 # Get all unique years, months, and authors from the db that match the 
@@ -367,7 +428,7 @@ def seed():
     # because this is just intended as a tester function and isn't related
     # to the rest of the site
     posts_to_make = 30
-    time_diff = timedelta(days=21)
+    time_diff = timedelta(days=15)
 
     # Check that we're not blowing up our own database with this function
     post_count = Post.query.count()
@@ -375,7 +436,7 @@ def seed():
         flash("Too many posts. Bailing.")
         return redirect(url_for('index'))
 
-    # Users
+    # Example users
     users = [
         {'email':"fakeemail@example.com", 'password':"password", 'name':"Joe"},
         {'email':"anotherlongfakeemail@example.com", 'password':"password", 'name':"Sawyer"},
@@ -390,7 +451,7 @@ def seed():
         {'email':"cathysemail@example.com", 'password':"password", 'name':"Cathy"},
     ]
 
-    # Post content
+    # Example post content
     posts = [
         "An pericula mediocritatem necessitatibus pri, velit falli deterruisset in nec, at eum porro nobis. Est inani mollis suscipiantur ex, his in tale oblique accusamus, quod consulatu mea at. Mucius alienum delicata te vix, probo phaedrum salutatus vis no. Mazim laudem perpetua ius ad. Quis definitiones est id, accusata constituto honestatis mei id, in eos persius tincidunt expeten"
         "Tacimates euripidis usu et, in ocurreret sententiae reprehendunt qui, id molestie laboramus vix. Omnes albucius constituto sed et, at nec viderer labores oportere. Cu nostrud lucilius corrumpit usu, est solet tacimates consulatu id. Usu eu consul numquam saperet."

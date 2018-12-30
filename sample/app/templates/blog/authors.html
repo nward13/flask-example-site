@@ -19,7 +19,7 @@
             <h1>{{ author.name }}</h1>
             <strong>Number of posts:</strong> {{ author.post_count }}
             <br>
-            <strong><a href="{{ url_for('blog.author', author_id=author.id) }}">More about the author</a></strong>
+            <strong><a href="{{ url_for('blog.author', author_id=author.id) }}">More about this author</a></strong>
         </div>
         {% if not loop.last %}
             <hr>
