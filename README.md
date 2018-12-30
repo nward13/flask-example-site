@@ -1,15 +1,5 @@
 # Nick Ward Code Challenge
-Thanks for checking out my code challenge. This ReadMe contains some info about design choices, features, and how to run the server and use the site.
-
-## Tasks
-- Create an about me page and link to it in the nav
-- Create a create blog post page
-
-    - a post must have a title
-    - the post itelf must be at least 10 characters long (yes totally arbitrary :-) )
-
-- Update the index page to list all blog posts (showing 10 per page)
-- Add archive listing page that limits the results to a specific month/year
+Thanks for checking out my code challenge! This ReadMe contains some information about design choices, features, and how to run the server and use the site.
 
 ## Requirements
 
@@ -42,25 +32,23 @@ Main.py contains the logic to initialize the app and database and to register th
 - localhost (no port should be specified)
 
 
-# What does the site do
-I was a bit uncertain whether this was intended to be my own blog or a blog for everyone, so I included some features from both. The about "About Nick" page contains some basic information about me and some pictures. The rest of the site is intended to be a blog for everyone. Here are some things you can do with it:
+# What does the site do?
+The majority of the site is a blog for everyone. You can create an account, publish blog posts, see everyone else's blog posts, and visit the archives page to seee blog posts by author, year, and month. In addition, there is an 'About Nick' page that contains some basic information about me and some pictures. Some of the site features include:
 
 ## Login / Register a New User
 There are no users by default, but you can create a new account by following the 'Create an account' link from the login page. Once you register, you will be logged in and able to create blog posts.
 
 ## Create Blog Posts
-After creating an account or loggin in, you can go to the 'Create' page to make a new blog post. If you just want to see how a group of posts appear on the site, see 'Seed the Blog' below.
+After creating an account or logging in, you can go to the 'Create' page to make a new blog post. If you just want to see how a group of posts appears on the site, see 'Seed the Blog' below.
 
 ## Seed the Blog
-At the bottom of the page (from any page on the site), you can click the 'Seed the blog' link to automatically create three new users and 20 new posts from those users. The point of this is just to make it easy to see how the site acts with multiple posts from different users and publish times. The publish dates of these "seed" posts are also varied to make the archive page a bit more interesting.
+At the bottom of the page (from any page on the site), you can click the 'Seed the blog' link to automatically create 11 new users and 30 new posts from those users. The point of this is just to make it easy to see how the site acts with multiple posts from different users and publish times. The publish dates of these "seed" posts are also varied to make the archive page a bit more interesting.
 
 ## Viewing blog posts
 Everyone's blog posts will show up on the home page with the most recent posts first and 10 posts per page. You can go to the Archives page to view blog posts in a more organized way.
 
+## Archive
+The archive page allows you to view posts by any combination of publication year, publication month, and author. As selections are made, the select fields are updated to reflect the possible values for the other fields based on your selections. For example, if you select Year:2017 and Month:October, you will only see the names of authors who published posts in October of 2017 in the 'Authors' selection field. 
+
 ## Authors
-The 'Authors' page lists all of the authors who have contricuted to the blog. You can see how many posts each author has made and link to an information page about them by following the 'More about this author' link. This information page lists their contact information and recent posts, as well as linking to the archives page, where you can see all of their blog posts.
-
-## Archives
-The Archives page allows you to view blog posts by Author, Month, and Year. Every time you make a category selection, the options are updated to match all of the unique values that currently exist in the database and match the current selection.
-
-
+The 'Authors' page lists all of the authors who have contributed to the blog. You can see how many posts each author has made and link to an information page about them by following the 'More about this author' link. This information page lists their contact information and recent posts, as well as linking to the archives page, where you can see all of their blog posts.
