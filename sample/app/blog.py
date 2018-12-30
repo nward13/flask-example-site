@@ -17,8 +17,8 @@ from app.auth import User, add_user
 
 bp = Blueprint('blog', __name__)
 
-# Number of posts for each page across the site (i.e. main blog, archives, etc.)
-POSTS_PER_PAGE = 10
+# Number of items for each page across the site (i.e. main blog, archives, etc.)
+ITEMS_PER_PAGE = 10
 
 
 # Database model for blog posts
@@ -77,7 +77,7 @@ def index():
 
     # Get the most recent posts from the database, using paginate, our 
     # number of posts per page (10), and the current page (from request arguments)
-    posts = Post.query.order_by(Post.pub_date.desc()).paginate(page, POSTS_PER_PAGE, False)
+    posts = Post.query.order_by(Post.pub_date.desc()).paginate(page, ITEMS_PER_PAGE, False)
 
     # Get the urls for the next page and the previous page, which will be
     # used for "Older Posts" links
@@ -144,20 +144,33 @@ def author(author_id):
 # information page
 @bp.route("/blog/authors/")
 def authors():
+    # Get the current page from the request arguments
+    page = request.args.get('page', default=1, type=int)
     
     # Get each user that has made a post and the number of posts they 
-    # have made. Returns a list of (User, post_count) tuples. In the
-    # event that there are no matching records, returns an empty list
-    post_counts = db.session.query(User, func.count(Post.author_id)) \
-        .outerjoin(Post).filter(Post.id != None).group_by(Post.author_id).all()
+    # have made. Returns a pagination object. post_counts.items will return
+    # a list of (User, post_count) tuples. In the event that there are 
+    # no matching records, returns an empty list
+    post_counts = User.query.with_entities(User, func.count(Post.author_id)) \
+        .outerjoin(Post, User.id == Post.author_id).filter(Post.id != None) \
+        .group_by(Post.author_id).paginate(page, ITEMS_PER_PAGE, False)
 
     # Go from a list of (User, post_count) tuples to a list of objects
     # containing only the values we need to pass into our template 
     authors = [{'id':user.id, 'name':user.name, 'post_count':post_count} 
-        for (user, post_count) in post_counts]
+        for (user, post_count) in post_counts.items]
+
+    # Get the urls for the next page and the previous page of authors
+    next_url = url_for('blog.authors', page=post_counts.next_num) if post_counts.has_next else None
+    prev_url = url_for('blog.authors', page=post_counts.prev_num) if post_counts.has_prev else None
 
     # Render our authors template with the authors from the database
-    return render_template('blog/authors.html', authors=authors)
+    return render_template(
+        'blog/authors.html', 
+        authors=authors,
+        next_url=next_url,
+        prev_url=prev_url
+    )
 
 
 # Returns a JSON object with the options available for a given selection
@@ -291,7 +304,9 @@ def author_options(year=0, month=0):
 # Any argument=0 means that all values for that category are matched.
 # Calling without arguments returns all posts in the db
 def archive_posts(year=0, month=0, author_id=0):
-    base_query = db.session.query(Post)
+    #td
+    # base_query = db.session.query(Post)
+    base_query = Post.query
 
     # Get the query filters for the given parameters. 0 values will result
     # in an empty string in the filters list which will not affect the query
@@ -351,7 +366,7 @@ def seed():
     # each post. These constants are only declared inside seed function 
     # because this is just intended as a tester function and isn't related
     # to the rest of the site
-    posts_to_make = 20
+    posts_to_make = 30
     time_diff = timedelta(days=21)
 
     # Check that we're not blowing up our own database with this function
@@ -366,6 +381,13 @@ def seed():
         {'email':"anotherlongfakeemail@example.com", 'password':"password", 'name':"Sawyer"},
         {'email':"longemailsaretheworst@example.com", 'password':"password", 'name':"Danielle"},
         {'email':"longemailexample@example.com", 'password':"password", 'name':"Logan"},
+        {'email':"tomsemail@example.com", 'password':"password", 'name':"Tom"},
+        {'email':"terrysemail@example.com", 'password':"password", 'name':"Terry"},
+        {'email':"rachelsemail@example.com", 'password':"password", 'name':"Rachel"},
+        {'email':"paulsemail@example.com", 'password':"password", 'name':"Paul"},
+        {'email':"susiesemail@example.com", 'password':"password", 'name':"Susie"},
+        {'email':"ryansemail@example.com", 'password':"password", 'name':"Ryan"},
+        {'email':"cathysemail@example.com", 'password':"password", 'name':"Cathy"},
     ]
 
     # Post content
