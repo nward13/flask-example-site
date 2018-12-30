@@ -1,6 +1,19 @@
 # Nick Ward Code Challenge
 Thanks for checking out my code challenge! This ReadMe contains some information about design choices, features, and how to run the server and use the site.
 
+## Updates After Code Review
+I greatly appreciate the detailed feedback, and I have incorporated the suggested changes and made a few additional updates as well.  
+
+- Pagination on 'Archive' and 'Authors' pages  
+- Cleaned up import statements  
+- Changed all urls to end in a trailing slash  
+- Moved all db commits out of helper functions to allow the views to more clearly manage transaction boundaries  
+- Fixed the archive form validation issue  
+- Changed the structure of several database queries to make them more efficient and clear  
+- Revamped the archives page to allow users to sort posts by any combination of publication year, publication month, and author.  
+- Changed the seed function to add more posts and authors, allowing users to see more of the blog functionality without having to create lots of accounts or posts
+  
+
 ## Requirements
 
 - You will need to install docker (https://store.docker.com/search?offering=community&platform=desktop&q=&type=edition)
