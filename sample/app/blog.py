@@ -3,7 +3,7 @@
 import calendar
 from itertools import chain
 from datetime import datetime, timedelta
-from flask import Blueprint, flash, Flask, redirect, render_template, request, url_for
+from flask import Blueprint, flash, Flask, redirect, render_template, request, url_for, jsonify
 from flask_login import current_user, login_required
 from flask_wtf import FlaskForm
 from flask_sqlalchemy import SQLAlchemy
@@ -20,6 +20,8 @@ bp = Blueprint('blog', __name__)
 # Number of posts for each page across the site (i.e. main blog, archives, etc.)
 POSTS_PER_PAGE = 10
 
+
+# Database model for blog posts
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(80), nullable=False)
@@ -56,28 +58,20 @@ class PostForm(FlaskForm):
 
 # Form to select how to sort the archives
 class ArchiveForm(FlaskForm):
-    # These are the categories for the archives. you can view posts
-    # organized by author, month or year
-    sort_by_values = {'author':'author', 'month':'month', 'year':'year'}
-    sort_choices = [
-        (sort_by_values['author'], 'Author'), 
-        (sort_by_values['month'], 'Month (in ' + str(datetime.now().year) + ')'), 
-        (sort_by_values['year'], 'Year')
-    ]
-    sort_by = SelectField('Sort By:', choices=sort_choices)
-
-    # These are the subfields. These are filled in dynamically based on
-    # the unique values in the database for whicheve category the user
-    # selects. i.e. if I want to view posts by author, I will only have
-    # to choose from authors that have published posts
-    sub_sort = SelectField('Include Results From:', choices=[], coerce=int)
+    # Categories for the archives. you can view posts organized by author, 
+    # month or year. The field choices are updated dynamically based on
+    # the unique values in the database for the user's current selection.
+    # i.e. if I selected 2017 as the year, I will only be able to select
+    # from authors who wrote posts in 2017
+    year = SelectField('Year:', choices=[], coerce=int)
+    month = SelectField('Month', choices=[], coerce=int)
+    author = SelectField('Author', choices=[], coerce=int)
 
 
 # The index route. The main page of our site serves all of the blog posts,
 # starting with the most recent posts and showing 10 per page
 @bp.route("/", methods=['GET', 'POST'])
 def index():
-
     # Get the current page from the request arguments
     page = request.args.get('page', default=1, type=int)
 
@@ -133,7 +127,7 @@ def author(author_id):
         return redirect(request.args.get('next') or url_for('index'))
 
     # Base query for posts by author
-    user_posts_query = posts_by_auth_query(author_id)
+    user_posts_query = Post.query.filter_by(author_id=author_id)
 
     # Get the number of posts the author has published
     post_count = user_posts_query.count()
@@ -166,122 +160,175 @@ def authors():
     return render_template('blog/authors.html', authors=authors)
 
 
+# Returns a JSON object with the options available for a given selection
+# of archive categories. Used by the archive page JS to fill the archive
+# select fields as the user narrows their search
+@bp.route("/archive_options_ajax/")
+def archive_options_ajax():
+    # Grab the query paramaters from the request. Any parameter = 0 means
+    # return all of the options for that category
+    year = request.args.get('year')
+    month = request.args.get('month')
+    author_id = request.args.get('author')
+
+    # Return a JSON of the distinct values in the database. i.e. If the 
+    # request contains year=2017, returned object will have all available 
+    # years, months with posts during 2017, and authors who made posts in 2017
+    options = archive_options(year, month, author_id)
+    return jsonify(options)
+    
+
 # The archive of blog posts
 @bp.route("/blog/archive/", methods=['GET', 'POST'])
 def archive():
     form = ArchiveForm()
 
+    # Get all available unique values for years, months, and authors in the db 
+    options = archive_options()  
+
+    # archive options returns a dictionary of lists, with each list containing
+    # a dict with 'value' and 'name' for each option, where value is the
+    # useful value to us and name is the display name. We want to add these
+    # options to the form choices as (value, name) tuples
+    form.year.choices = [(choice['value'], choice['name']) for choice in options['year']]
+    form.month.choices = [(choice['value'], choice['name']) for choice in options['month']]
+    form.author.choices = [(choice['value'], choice['name']) for choice in options['author']]
+
+    # POST request with valid form
     if form.validate_on_submit():
+        # Grab the query parameters from the form
+        year = form.year.data
+        month = form.month.data
+        author = form.author.data
 
-        # The sorting category from the submitted form (i.e. yearly, monthly, by author)
-        sort_by = form.sort_by.data
-
-        # The element to search by in the category (i.e. the author's name).
-        # The form data will always contain the sub-field value rather than
-        # the name (the # for a month and the author_id for an author)
-        sub_sort = form.sub_sort.data
-
-        # If we're sorting by year, grab all the posts where year matches
-        # the sub_sort parameter (the year the user wants posts from).
-        # Again, the post limit is arbitrary, we should theoretically just
-        # paginate this too
-        if sort_by == ArchiveForm.sort_by_values['year']:
-            posts = Post.query.filter(extract('year', Post.pub_date) == sub_sort).limit(30).all()
-
-        # If we're sorting by month, grab all the posts where month matches
-        # the sub-sort parameter
-        elif sort_by == ArchiveForm.sort_by_values['month']:
-            posts = Post.query.filter(extract('month', Post.pub_date) == sub_sort).limit(30).all()
-
-        # If we're sorting by author, grab all the posts where author_id
-        # matches the sub-sort parameter
-        elif sort_by == ArchiveForm.sort_by_values['author']:
-            posts = posts_by_auth_query(sub_sort).limit(30).all()
+        # Get all of the posts for the given paramters. Returns a list
+        # of Post objects
+        posts = archive_posts(year, month, author)
 
         # Render the template with all of the posts in that category.
         return render_template(
             'blog/archive.html', 
-            form=None,  
-            sub_options=None, 
+            form=None,
             posts=posts,
         )
 
-    # If this is a GET request, we send an object to the template with all 
-    # of the potential sort selections for each category (rather than an 
-    # AJAX request on selection of the category). This allows us to use
-    # jQuery to quickly change the secondary selection elements based
-    # on which category the user selected. To do this, we need to find all
-    # of the unique values in the database for each category (years, months, authors)
+    # Render our template without posts for a GET request with no request
+    # args and show the user the selection form
+    return render_template(
+        'blog/archive.html', 
+        form=form,
+        posts=None
+    )
 
 
-    # Get all the unique publication years in the database
-    years_raw = db.session.query(distinct(extract('year', Post.pub_date))).all()
-    # Flatten the returned tuples e.g. query returns (2018,) but we want 2018
-    # Also, add each value to a dict so that we can match the format of authors and months,
-    # which both require display names that don't match the value names
-    years = [{'value':year, 'name':year} for (year,) in years_raw]
+# Returns a filter to specify the post's publish year. year=0 means
+# 'any year', so it returns an empty string which will not affect the query
+def year_filter(year):
+    return '' if int(year) == 0 else extract('year', Post.pub_date) == year
 
 
-    # Get all the unique publication months for posts published in 2018 from the db
-    # First, get all the posts from this year, then 
-    posts_this_yr = Post.query.filter(extract('year', Post.pub_date) == 2018).all()
-    month_values = []
-    # Filter out the unique months of publication
-    for post in posts_this_yr:
-        month = post.pub_date.month
-        if month not in month_values:
-            month_values.append(month)
-    # Take all the unique month numbers and match them up with a display name
-    # i.e. I want to choose from January, February, rather than 1, 2
-    months = [{'value':month, 'name':calendar.month_name[month]} for month in month_values]
+# Returns a filter to specify the post's publish month. month=0 means
+# 'any month', so it returns an empty string which will not affect the query
+def month_filter(month):
+    return '' if int(month) == 0 else extract('month', Post.pub_date) == month
 
 
-    # Get all the unique author id's from the db
-    author_ids_raw = db.session.query(Post.author_id).distinct().limit(10).all()
-    # Flatten the id values
-    author_ids = [author_id for (author_id,) in author_ids_raw]
-    authors = []
-    # Grab the name for each author_id, and add them to an object so that
-    # users can select authors by name, but we can still recieve the request
-    # by author_id (because names are not unique values in the db)
-    for author_id in author_ids:
-        authors.append({
-            'value':author_id, 
-            'name': User.query.get(author_id).name 
-        })
+# Returns a filter to specify the post's author. author_id=0 means 'any
+# author', so it returns an empty string which will not affect the query
+def author_filter(author_id):
+    return '' if int(author_id) == 0 else Post.author_id == author_id
 
 
-    # Store all of our unique values for each category as one object to 
-    # pass to the template so that our js can access it
-    # Each item in the dict represents a category and contains a list of 
-    # sub-dicts, where the sub-dicts contain the value and display name 
-    # for each unique option in the category
-    sub_options = {
+# Returns the unique year values in the db corresponding to the given month
+# and author parameters. Calling without arguments will return all unique years
+def year_options(month=0, author_id=0):
+    # Get the query filters for the given month and author. 0 values will result
+    # in an empty string in the filters list which will not affect the query
+    filters = [month_filter(month), author_filter(author_id)]
+
+    # Get all unique year values for the given month and author. Returns
+    # a list of (year,) tuples
+    years_raw = db.session.query(distinct(extract('year', Post.pub_date)))\
+        .filter(*filters).all()
+
+    # Return a list of dicts with the value and display name for each year    
+    return [{'value':year, 'name':year} for (year,) in years_raw]
+
+
+# Returns the unique month values in the db corresponding to the given year
+# and author parameters. Calling without arguments will return all unique months
+def month_options(year=0, author_id=0):
+    # Get the query filters for the given year and author. 0 values will result
+    # in an empty string in the filters list which will not affect the query
+    filters = [year_filter(year), author_filter(author_id)]
+
+    # Get all unique month values for the given year and author. Returns
+    # a list of (month,) tuples
+    months_raw = db.session.query(distinct(extract('month', Post.pub_date)))\
+        .filter(*filters).all()
+
+    # Return a list of dicts with the value and display name for each month
+    return [{'value':month, 'name':calendar.month_name[month]} for (month,) in months_raw]
+
+
+# Returns the unique authors in the db corresponding to the given year and 
+# month parameters. Calling without arguments will return all unique authors
+def author_options(year=0, month=0):
+    # Get the query filters for the given month and year. 0 values will result
+    # in an empty string in the filters list which will not affect the query
+    filters = [year_filter(year), month_filter(month)]
+
+    # Get all unique author_id values and their names for the given year 
+    # and month. Returns a list of (author_id, name) tuples
+    authors_raw = db.session.query(distinct(Post.author_id), User.name)\
+        .outerjoin(User).filter(*filters).all()
+
+    # Return a list of dicts with the author_id and display name for each author
+    return [{'value':auth_id, 'name':auth_name} for (auth_id, auth_name) in authors_raw]
+
+
+# Get all posts matching the publish year, publish month, and author parameters
+# Any argument=0 means that all values for that category are matched.
+# Calling without arguments returns all posts in the db
+def archive_posts(year=0, month=0, author_id=0):
+    base_query = db.session.query(Post)
+
+    # Get the query filters for the given parameters. 0 values will result
+    # in an empty string in the filters list which will not affect the query
+    filters = [year_filter(year), month_filter(month), author_filter(author_id)]
+
+    # Query the db for posts matching the year, month, and author parameters.
+    # Returns a list of Post objects
+    return base_query.filter(*filters).all()
+
+
+# Get all unique years, months, and authors from the db that match the 
+# given parameters. Used to provide select options for the archive page 
+# based on what is already selected. Any argument=0 means that all values 
+# for that category are matched. Calling without arguments returns all 
+# distinct years, months, and authors in the db
+def archive_options(year=0, month=0, author_id=0):
+    # Get the unique years, months, and authors that match the given 
+    # parameters. These are lists of dicts with {'value', 'name'} for
+    # each option, i.e. months = [{'value':2, 'name':February}, ...]
+    years = year_options(month, author_id)
+    months = month_options(year, author_id)
+    authors = author_options(year, month)
+
+    # Store all options in a dict, with each key corresponding to a list
+    # of sub-dicts, where each sub-dicts represent an option  
+    options = {
         'year': years,
         'month': months,
         'author': authors
     }
 
-    # Get a list of all possible submission choices. Our js will decide
-    # what options to show a user, but the form needs to know the possible
-    # option values to validate. Take the sub_options dict of lists and
-    # create a tuple from each object in the lists.
-    # chain.from_iterable(sub_options.values()) is equivalent to the list comprehension
-    # [choice for category in sub_options.values() for choice in category]
-    sub_sort_choices = [(choice['value'], choice['name']) 
-        for choice in chain.from_iterable(sub_options.values())]
+    # Add an option for 'Any value' to each category
+    any_choice = {'value': 0, 'name':'All'}
+    for option in options.values():
+        option.insert(0, any_choice)
 
-    # Add our choices to the form
-    form.sub_sort.choices.extend(sub_sort_choices)
-
-    # Render our template without posts for a GET request and show the
-    # user the selection form
-    return render_template(
-        'blog/archive.html', 
-        form=form,  
-        sub_options=sub_options,
-        posts=None
-    )
+    return options
 
 
 # Helper function to add posts to the database
@@ -294,11 +341,6 @@ def add_post(title, body, author_id, pub_date=None):
         pub_date=pub_date
     )
     db.session.add(new_post)
-
-
-# Returns a reused base query for posts by the given author
-def posts_by_auth_query(author_id):
-    return Post.query.filter_by(author_id=author_id)
 
 
 # Create a couple fake accounts and articles

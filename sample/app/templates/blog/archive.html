@@ -2,50 +2,63 @@
 {% extends 'base.html' %}
 
 {% block head %}
-    <!-- jQuery cdn -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-
     <script>
 
-        // The view passes in all of the unique values for each archive
-        // category when the template is rendered, so the javascript just
-        // gets that data into a usable form and attaches an on-change
-        // listener to the first select box (category), then updates the
-        // second select box with the options that exist in our database
+        // The form fills all of the unique values for each archive
+        // category when the template is rendered. When the user selects
+        // a new value for one of the categories, we make an ajax request
+        // for the new options that match their selection and fill the
+        // form fields with them
 
-        var sub_options = JSON.parse('{{ sub_options | tojson | safe }}');
-        console.log("SUB_OPTIONS: ", sub_options)
+        // When a user makes a new selection in a form category
+        $(document).on('change', ".form-group", function() {
+            // Save the currently selected values
+            selected_year = $("#year").val()
+            selected_month = $("#month").val()
+            selected_author = $("#author").val()
 
-        $(document).ready(function(){
-            if (sub_options) {
-                update_options();
-            }
+            // Get the new options that match the user's selection
+            get_options(selected_year, selected_month, selected_author)
+                .then(result => {
+                    // Fill the form with the new options
+                    fill_options(result);
+
+                    // Reselect the user's previous selection
+                    $("#year").val(selected_year)
+                    $("#month").val(selected_month)
+                    $("#author").val(selected_author)
+                })
         });
 
-        $(document).on('change', "#sort_by", function() {
-            update_options();
-        });
-
-        function update_options() {
-            let sort_by = get_sort_by();
-            $('#sub_sort').empty()
-            fill_sub_options(sort_by);
+        function get_options(year, month, author) {
+            return $.getJSON($SCRIPT_ROOT + 'archive_options_ajax/', 
+                {
+                    year: year, 
+                    month: month,
+                    author: author
+                }).then(function(response) {
+                    return response
+                })
         }
 
-        function get_sort_by(sort_by) {
-            sort_by = $("#sort_by").val()
-            return sort_by
-        }
-        
-        function fill_sub_options(sort_by) {
-            let choices = sub_options[sort_by]
-            if (choices.length < 1 || choices == undefined) {
-                $('#sub_sort').append("<option value=''>Sorry, we don't have any posts yet.</option>")
-                $('.btn').hide()
-            } else {
-                for (let i = 0; i < choices.length; i++) {
-                    $('#sub_sort').append("<option value=" + choices[i].value + ">" + choices[i].name + "</option>")
-                } 
+        function fill_options(options) {
+
+            for (var category in options) {
+                console.log("Category: ", category, "Options: ", options[category])
+                var choices = options[category]
+                $("#" + category).empty()
+                
+                if (choices.length < 1 || choices == undefined) {
+                    $("#" + category).append("<option value=''>Sorry, we don't have any posts matching these parameters yet.</option>")
+                    $('.btn').hide()
+                } else {
+                    for (var i = 0; i < choices.length; i++) {
+                        $("#" + category).append(
+                            "<option value=" + choices[i].value + ">" 
+                            + choices[i].name + "</option>"
+                        )
+                    }
+                }
             }
         }
 
@@ -73,8 +86,9 @@
             <div class="card-block">
                 <form method="POST">
                     {{ form.hidden_tag() }}
-                    {{ render_field(form.sort_by) }}
-                    {{ render_field(form.sub_sort) }}
+                    {{ render_field(form.year) }}
+                    {{ render_field(form.month) }}
+                    {{ render_field(form.author) }}
                     <div class="text-right">
                         <button type="submit" class="btn btn-primary">View Posts</button>
                     </div>

@@ -8,7 +8,9 @@
 
     <link rel="icon" href="https://v4-alpha.getbootstrap.com/favicon.ico">
 
-    
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
     <title>{% block title %}{% endblock %}</title>
 
     <!-- Bootstrap core CSS -->
@@ -20,6 +22,9 @@
     <!-- A slightly modified version of the original Bootstrap Blog Template css.
         Original link above -->
     <link href="{{ url_for('static', filename='css/base.css') }}" rel="stylesheet">
+
+    <!-- Create a global variable with our root url -->
+    <script type=text/javascript>$SCRIPT_ROOT = {{ request.url_root|tojson|safe }};</script>
 
     {% block head %}{% endblock %}
 
@@ -83,6 +88,7 @@
     
     {% block footer %}
       <footer class="blog-footer">
+          <p>{{ request.script_root|tojson|safe }}</p>
           <p>Just want to see lots of blog posts? <a href="{{ url_for('blog.seed') }}">Seed the blog.</a></p>
         <p>Original blog template built for <a href="https://getbootstrap.com">Bootstrap</a> by <a href="https://twitter.com/mdo">@mdo</a>.</p>
         <p>Thanks <a href="https://twitter.com/mdo">@mdo</a>!</p>
@@ -96,8 +102,6 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js" integrity="sha384-A7FZj7v+d/sdmMqp/nOQwliLvUsJfDHW+k9Omg/a/EheAdgtzNs3hpfag6Ed950n" crossorigin="anonymous"></script>
-    <script>window.jQuery || document.write('<script src="https://v4-alpha.getbootstrap.com/assets/js/vendor/jquery.min.js"><\/script>')</script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
     <script src="https://v4-alpha.getbootstrap.com/dist/js/bootstrap.min.js"></script>
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->

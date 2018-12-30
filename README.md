@@ -61,6 +61,6 @@ Everyone's blog posts will show up on the home page with the most recent posts f
 The 'Authors' page lists all of the authors who have contricuted to the blog. You can see how many posts each author has made and link to an information page about them by following the 'More about this author' link. This information page lists their contact information and recent posts, as well as linking to the archives page, where you can see all of their blog posts.
 
 ## Archives
-The Archives page allows you to view blog posts by Author, Month (for posts in 2018), and Year. For each 'Sort By' option, the secondary options are filled in with all of the unique values that currently exist in the database.
+The Archives page allows you to view blog posts by Author, Month, and Year. Every time you make a category selection, the options are updated to match all of the unique values that currently exist in the database and match the current selection.
 
 
