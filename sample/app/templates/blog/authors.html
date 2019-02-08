@@ -1,0 +1,39 @@
+{% extends 'blog/blog.html' %}
+
+{% block heading %}
+    {% block title %}
+        Contributing Authors
+    {% endblock %}
+{% endblock %}
+
+{% block subheading %}
+    The folks who make this blog great (or at least good).
+{% endblock %}
+
+{% block content %}
+    {% if not authors %}
+        <p>No authors found.</p>
+    {% endif %}
+    {% for author in authors %}
+        <div class="mb-5">
+            <h1>{{ author.name }}</h1>
+            <strong>Number of posts:</strong> {{ author.post_count }}
+            <br>
+            <strong><a href="{{ url_for('blog.author', author_id=author.id) }}">More about this author</a></strong>
+        </div>
+        {% if not loop.last %}
+            <hr>
+        {% endif %}
+    {% endfor %}
+
+    {% if prev_url %}
+        <a href="{{ prev_url }}">Previous Page</a>    
+    {% endif %}
+    {% if next_url %}
+        <span>&nbsp;&nbsp;</span>
+        <a href="{{ next_url }}">Next Page</a>
+    {% endif %}
+
+
+
+{% endblock %}

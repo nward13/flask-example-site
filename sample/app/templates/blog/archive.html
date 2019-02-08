@@ -1,0 +1,125 @@
+{% from "_formhelpers.html" import render_field %}
+{% extends 'base.html' %}
+
+{% block head %}
+    <script>
+
+        // The form fills all of the unique values for each archive
+        // category when the template is rendered. When the user selects
+        // a new value for one of the categories, we make an ajax request
+        // for the new options that match their selection and fill the
+        // form fields with them
+
+        // When a user makes a new selection in a form category
+        $(document).on('change', ".form-group", function() {
+            // Save the currently selected values
+            selected_year = $("#year").val()
+            selected_month = $("#month").val()
+            selected_author = $("#author").val()
+
+            // Get the new options that match the user's selection
+            get_options(selected_year, selected_month, selected_author)
+                .then(result => {
+                    // Fill the form with the new options
+                    fill_options(result);
+
+                    // Reselect the user's previous selection
+                    $("#year").val(selected_year)
+                    $("#month").val(selected_month)
+                    $("#author").val(selected_author)
+                })
+        });
+
+        function get_options(year, month, author) {
+            return $.getJSON($SCRIPT_ROOT + 'archive_options_ajax/', 
+                {
+                    year: year, 
+                    month: month,
+                    author: author
+                }).then(function(response) {
+                    return response
+                })
+        }
+
+        function fill_options(options) {
+
+            for (var category in options) {
+                console.log("Category: ", category, "Options: ", options[category])
+                var choices = options[category]
+                $("#" + category).empty()
+                
+                if (choices.length < 1 || choices == undefined) {
+                    $("#" + category).append("<option value=''>Sorry, we don't have any posts matching these parameters yet.</option>")
+                    $('.btn').hide()
+                } else {
+                    for (var i = 0; i < choices.length; i++) {
+                        $("#" + category).append(
+                            "<option value=" + choices[i].value + ">" 
+                            + choices[i].name + "</option>"
+                        )
+                    }
+                }
+            }
+        }
+
+    </script>
+
+{% endblock %}
+
+{% block heading %}
+    {% block title %}
+        Blog Archives
+    {% endblock %}
+{% endblock %}
+
+{% block subheading %}
+    The rich history of The Code Challenge Blog.
+{% endblock %}
+
+{% block container %}
+
+    {% if form is not none %}
+        <div class="card">
+            <div class="card-header">
+                Explore the Archives
+            </div>
+            <div class="card-block">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    {{ render_field(form.year) }}
+                    {{ render_field(form.month) }}
+                    {{ render_field(form.author) }}
+                    <div class="text-right">
+                        <button type="submit" class="btn btn-primary">View Posts</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <br>
+    {% endif %}
+
+    {% if posts is not none %}
+        {% if not posts %}
+            <p>No blog posts yet.</p>
+        {% endif %}
+        {% for post in posts %}
+            <div class="blog-post">
+                <h2 class="blog-post-title">{{ post.title }}</h2>
+                <p class="blog-post-meta">{{ post.pub_date }} by 
+                    <a href="{{ url_for('blog.author', author_id=post.author_id) }}">{{ post.author.name }}</a>
+                </p>
+                <p>{{ post.body }}</p>
+            </div>
+        {% endfor %}
+    {% endif %} 
+
+    {% if prev_url %}
+        <a href="{{ prev_url }}">Previous Page</a>    
+    {% endif %}
+    {% if next_url %}
+        <span>&nbsp;&nbsp;</span>
+        <a href="{{ next_url }}">Next Page</a>
+    {% endif %}
+    
+{% endblock %}
+
