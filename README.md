@@ -1,52 +1,39 @@
-# Nick Ward Code Challenge
-Thanks for checking out my code challenge! This ReadMe contains some information about design choices, features, and how to run the server and use the site.
-
-## Updates After Code Review
-I greatly appreciate the detailed feedback, and I have incorporated the suggested changes and made a few additional updates as well.  
-
-- Pagination on 'Archive' and 'Authors' pages  
-- Cleaned up import statements  
-- Changed all urls to end in a trailing slash  
-- Moved all db commits out of helper functions to allow the views to more clearly manage transaction boundaries  
-- Fixed the archive form validation issue  
-- Changed the structure of several database queries to make them more efficient and clear  
-- Revamped the archives page to allow users to sort posts by any combination of publication year, publication month, and author.  
-- Changed the seed function to add more posts and authors, allowing users to see more of the blog functionality without having to create lots of accounts or posts
+# Flask Blog  
+A simple example site built with Flask and Bootstrap.
   
-
 ## Requirements
 
 - You will need to install docker (https://store.docker.com/search?offering=community&platform=desktop&q=&type=edition)
 - If you are running on windows the make commands won't work.  You will have to manually run the commands found in Makefile
 - If you are running on Linux, you may have to run all make commands as super user
+## Usage  
 
-## Where is the code?
+Notes:  
+- Requires docker -- https://store.docker.com/search?offering=community&platform=desktop&q=&type=edition
+- If you are running on Windows, you may have to manually run the commands in the Makefile
 
-Main.py contains the logic to initialize the app and database and to register the app blueprints, but most of the logic is contained in the auth blueprint (login, create new user, require login, etc.) and the blog blueprint, which handles all of the logic for creating, viewing, and sorting blog posts.
+### Start the database
 
-## How to start the server
+    $ `make build` -- only needed the first time you run things
+    $ `make up`
 
-    $ make build -- only needed the first time you run things
-    $ make up
+## Stop and reset the database
 
-## How to stop and reset the database
-
-    $ make down
-    $ make up
+    $ `make down`
+    $ `make up`
 
 **NOTE** running make down will blow away your database!
 
-## How to regenerate the db schema
+## Regenerate the db schema
 
-    $ make up
-    $ make dump-schema -- separate terminal
+    $ `make up`
+    $ `make dump-schema` -- in a separate terminal
 
 ## How to access the server from your browser
 - localhost (no port should be specified)
 
-
 # What does the site do?
-The majority of the site is a blog for everyone. You can create an account, publish blog posts, see everyone else's blog posts, and visit the archives page to seee blog posts by author, year, and month. In addition, there is an 'About Nick' page that contains some basic information about me and some pictures. Some of the site features include:
+The majority of the site is a blog for everyone. You can create an account, publish blog posts, see everyone else's blog posts, and visit the archives page to seee blog posts by author, year, and month. In addition, there is an 'About Nick' page that contains some basic information about me and some of my favorite pictures. Some of the site features include:
 
 ## Login / Register a New User
 There are no users by default, but you can create a new account by following the 'Create an account' link from the login page. Once you register, you will be logged in and able to create blog posts.
